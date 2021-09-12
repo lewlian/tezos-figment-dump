@@ -1,27 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { TezosToolkit } from "@taquito/taquito";
 import { getTezosUrl } from "@tezos/lib";
-import { importKey } from '@taquito/signer';
+import { importKey } from "@taquito/signer";
 
 export default async function transfer(
-  req: NextApiRequest, 
+  req: NextApiRequest,
   res: NextApiResponse<string>
 ) {
   try {
-    const { mnemonic, email, password, secret, amount, recipient } = req.body
+    const { mnemonic, email, password, secret, amount, recipient } = req.body;
     const url = getTezosUrl();
     const tezos = new TezosToolkit(url);
 
-    await importKey(undefined);
+    await importKey(tezos, email, password, mnemonic, secret);
 
     // call the transfer method
-
+    const operation = await tezos.contract.transfer({
+      to: recipient,
+      amount: amount,
+    });
     // await for confirmation
-    await operation.confirmation(1) 
+    await operation.confirmation(1);
 
     res.status(200).json(operation.hash);
   } catch (error) {
-    console.log(error)
-    res.status(500).json('Transfer failed');
+    console.log(error);
+    res.status(500).json("Transfer failed");
   }
 }
